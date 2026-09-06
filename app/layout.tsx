@@ -1,10 +1,13 @@
 import { Analytics } from '@vercel/analytics/next'
+import { Noto_Sans_JP } from 'next/font/google'
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 
+const notoSansJP = Noto_Sans_JP({ subsets: ['latin'], variable: '--font-japanese' })
+
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
+  title: 'MY SIZE — 自分の服を、サイズの基準に。',
+  description: 'お気に入りの服の実寸を基準に、あなたに合うサイズ感の古着を探せます。',
   generator: 'v0.app',
   icons: {
     icon: [
@@ -39,8 +42,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className="antialiased">
+    <html lang="ja" className="bg-[#f7f7f4]">
+      <body className={`${notoSansJP.variable} antialiased`}>
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
