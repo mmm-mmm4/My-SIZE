@@ -1,33 +1,139 @@
 # My-SIZE
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [v0](https://v0.app).
+お気に入りの服の実寸を基準に、自分に合うサイズ感の古着を探せるWebアプリです。
 
-## Built with v0
+## Overview
 
-This repository is linked to a [v0](https://v0.app) project. You can continue developing by visiting the link below -- start new chats to make changes, and v0 will push commits directly to this repo. Every merge to `main` will automatically deploy.
+古着をオンラインで購入する際、「表記サイズが同じでもブランドやアイテムによって実際のサイズ感が違う」という課題に着目して制作しています。
 
-[Continue working on v0 →](https://v0.app/chat/projects/prj_dbM1GPBiuyFGmGdSptodMvLqHhUY)
+自分が持っている「ちょうどいい服」を基準服として登録し、商品の実寸と比較することで、自分のサイズ感に合った商品を探しやすくすることを目的としています。
 
-## Getting Started
+## Target User
 
-First, run the development server:
+- 古着をオンラインで購入する人
+- ブランドやアイテムによるサイズ感の違いに悩んでいる人
+- 自分に合う服のサイズを実寸で管理したい人
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-```
+## Features
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 1. 商品一覧
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+商品の一覧を確認し、自分に合うサイズの服を探すことができます。
 
-## Learn More
+- 商品一覧表示
+- ブランドによる絞り込み
+- カテゴリーによる絞り込み
+- 価格順での並び替え
+- サイズ一致度順での並び替え
 
-To learn more, take a look at the following resources:
+### 2. サイズ一致度
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-- [v0 Documentation](https://v0.app/docs) - learn about v0 and how to use it.
+登録した基準服の実寸と商品の実寸を比較し、サイズの一致度をパーセンテージで表示します。
+
+比較する項目は以下の4項目です。
+
+- 着丈
+- 身幅
+- 肩幅
+- 袖丈
+
+各項目に重みを設定し、基準服とのサイズ差が小さい商品ほど高い一致度になるようにしています。
+
+### 3. MY CLOSET
+
+自分にとって「ちょうどいい」服を基準服として登録・管理できます。
+
+登録できる項目：
+
+- 服の名前
+- カテゴリー
+- 着丈
+- 身幅
+- 肩幅
+- 袖丈
+
+登録した基準服はMY CLOSETから確認・編集できます。
+
+### 4. 基準服の登録・編集
+
+自分の基準となる服の実寸を入力して登録できます。
+
+入力したサイズをもとに、商品とのサイズ比較を行います。
+
+### 5. 商品詳細
+
+商品を選択すると、以下の情報を確認できます。
+
+- 商品画像
+- ブランド
+- 商品名
+- 価格
+- サイズ
+- カテゴリー
+- 着丈
+- 身幅
+- 肩幅
+- 袖丈
+- 基準服とのサイズ差
+- サイズ一致度
+
+### 6. お気に入り
+
+商品詳細画面から商品をお気に入りとして保存するUIを実装しています。
+
+## Screen
+
+### SEARCH
+
+商品一覧から商品を探す画面です。
+
+ブランド・カテゴリー・並び順を変更しながら、自分のサイズ感に合う商品を探すことができます。
+
+### MY CLOSET
+
+自分の基準服を管理する画面です。
+
+登録した基準服のサイズを確認したり、編集したりできます。
+
+### 基準服登録
+
+自分にとって「ちょうどいい」服の実寸を入力する画面です。
+
+### 商品詳細
+
+商品の詳細情報と、登録した基準服とのサイズ比較を確認できます。
+
+## Design Documents
+
+設計に関するドキュメントは `docs` フォルダに格納しています。
+
+- ワイヤーフレーム
+- ER図
+
+## Technology
+
+- Next.js
+- TypeScript
+- Tailwind CSS
+- Lucide React
+- Supabase
+
+## Directory Structure
+
+```text
+My-SIZE/
+├── app/
+│   ├── globals.css
+│   ├── layout.tsx
+│   └── page.tsx
+├── components/
+│   └── my-size-prototype.tsx
+├── docs/
+├── lib/
+│   └── supabase.ts
+├── public/
+├── .env.local
+├── .gitignore
+├── package.json
+├── package-lock.json
+└── README.md
