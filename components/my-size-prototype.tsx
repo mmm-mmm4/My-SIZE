@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { supabase } from "@/lib/supabase";
 import {
   ArrowRight,
   ChevronDown,
@@ -133,21 +134,175 @@ function formatPrice(price: number) {
 }
 
 export default function MySizePrototype() {
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
+
+  const [authMode, setAuthMode] = useState<"login" | "signup">("login");
+const [email, setEmail] = useState("");
+const [password, setPassword] = useState("");
+const [authError, setAuthError] = useState("");
+const [authMessage, setAuthMessage] = useState("");
+const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+useEffect(() => {
+  const checkSession = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (session) {
+      setIsLoggedIn(true);
+    }
+  };
+
+  checkSession();
+}, []);
+
+  const profile = profiles[0] ?? null;
+
+    async function handleAuth() {
+  setAuthError("");
+  setAuthMessage("");
+
+  if (!email || !password) {
+    setAuthError("メールアドレスとパスワードを入力してください");
+    return;
+  }
+
+  if (authMode === "signup") {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+
+    if (error) {
+      console.error("新規登録に失敗しました:", error);
+      setAuthError(error.message);
+      return;
+    }
+
+    setAuthMessage(
+      "登録しました。メールアドレスの確認が必要な場合があります。"
+    );
+    return;
+  }
+
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error) {
+    console.error("ログインに失敗しました:", error);
+    setAuthError(error.message);
+    return;
+  }
+
+  setAuthMessage("ログインしました");
+
+  // ログイン成功
+  setIsLoggedIn(true);
+}
+
+async function handleLogout() {
+  const { error } = await supabase.auth.signOut();
+
+  if (error) {
+    console.error("ログアウトに失敗しました:", error);
+    return;
+  }
+
+  setIsLoggedIn(false);
+  setView("home");
+}
+
+const [savedProducts, setSavedProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+  const loadProfiles = async () => {
+  const { data: userData } = await supabase.auth.getUser();
+
+  console.log("現在のログインユーザーID:", userData.user?.id);
+
+  if (!userData.user) {
+    console.log("ログインユーザーがいません");
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from("user_size_profiles")
+    .select("*")
+    .eq("user_id", userData.user.id)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error("基準服の取得に失敗しました:", error);
+    return;
+  }
+
+  console.log("取得した基準服:", data);
+
+  setProfiles(data ?? []);
+};
+
+  const loadSavedProducts = async () => {
+  const { data: userData } = await supabase.auth.getUser();
+
+  if (!userData.user) {
+    console.log("ログインユーザーがいません");
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from("saved_items")
+    .select("product_id")
+    .eq("user_id", userData.user.id);
+
+    console.log("Supabaseから取得した保存商品:", data);
+
+  if (error) {
+    console.error("保存商品の取得に失敗しました:", error);
+    return;
+  }
+
+  console.log("保存された商品:", data);
+
+  const saved = (data ?? [])
+    .map((item) =>
+      products.find((product) => product.id === item.product_id)
+    )
+    .filter(
+      (product): product is Product => product !== undefined
+    )
+    .filter(
+      (product, index, self) =>
+        index === self.findIndex((p) => p.id === product.id)
+    );
+
+  setSavedProducts(saved);
+};
+
+  loadProfiles();
+  loadSavedProducts();
+}, []);
+
   const [view, setView] = useState<"home" | "closet" | "form">("home");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [category, setCategory] = useState("すべて");
+  const [search, setSearch] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [brand, setBrand] = useState("すべて");
   const [sort, setSort] = useState<"match" | "price">("match");
   const [menuOpen, setMenuOpen] = useState(false);
-  const [saved, setSaved] = useState(false);
 
   const filteredProducts = useMemo(() => {
     const list = products.filter(
-      (product) =>
-        (category === "すべて" || product.category === category) &&
-        (brand === "すべて" || product.brand === brand),
-    );
+  (product) =>
+    (category === "すべて" || product.category === category) &&
+    (brand === "すべて" || product.brand === brand) &&
+    (
+      searchQuery.trim() === "" ||
+product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+product.brand.toLowerCase().includes(searchQuery.toLowerCase())
+    ),
+);
     return [...list].sort((a, b) =>
       sort === "price"
         ? a.price - b.price
@@ -155,7 +310,7 @@ export default function MySizePrototype() {
           ? score(b, profile) - score(a, profile)
           : b.id - a.id,
     );
-  }, [category, brand, sort, profile]);
+  }, [category, brand, searchQuery, sort, profile]);
 
   function goHome() {
     setView("home");
@@ -163,6 +318,71 @@ export default function MySizePrototype() {
     setMenuOpen(false);
   }
 
+if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f7f7f4] px-5">
+        <div className="w-full max-w-md">
+          <h1 className="text-3xl font-medium text-center mb-10">
+            MY SIZE
+          </h1>
+
+          <div className="space-y-4">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="メールアドレス"
+              className="w-full border border-gray-300 px-4 py-3"
+            />
+
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="パスワード"
+              className="w-full border border-gray-300 px-4 py-3"
+            />
+
+            {authError && (
+              <p className="text-sm text-red-500">
+                {authError}
+              </p>
+            )}
+
+            {authMessage && (
+              <p className="text-sm text-green-600">
+                {authMessage}
+              </p>
+            )}
+
+            <button
+              onClick={handleAuth}
+              className="w-full bg-[#181918] text-white py-3"
+            >
+              {authMode === "login" ? "ログイン" : "新規登録"}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setAuthMode(
+                  authMode === "login" ? "signup" : "login"
+                );
+                setAuthError("");
+                setAuthMessage("");
+              }}
+              className="w-full text-sm text-gray-600 py-2"
+            >
+              {authMode === "login"
+                ? "新規登録はこちら"
+                : "ログインはこちら"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <div className="min-h-screen bg-[#f7f7f4] text-[#181918]">
       <header className="sticky top-0 z-30 border-b border-[#deded8] bg-[#f7f7f4]/95 backdrop-blur">
@@ -202,6 +422,14 @@ export default function MySizePrototype() {
               MENU
             </button>
           </nav>
+          
+          <button
+  onClick={handleLogout}
+  className="transition-colors hover:text-[#181918]"
+>
+  LOGOUT
+</button>
+
           <button
             onClick={() => setMenuOpen(!menuOpen)}
             className="rounded-full p-2 sm:hidden"
@@ -238,12 +466,14 @@ export default function MySizePrototype() {
           <ProductDetail
             product={selectedProduct}
             profile={profile}
-            onBack={goHome}
+            onBack={() => setSelectedProduct(null)}
           />
         ) : view === "closet" ? (
           <Closet
             profile={profile}
             onAdd={() => setView("form")}
+            savedProducts={savedProducts}
+            onProductClick={(product) => setSelectedProduct(product)}
             onFind={() => {
               setView("home");
               setSort("match");
@@ -255,7 +485,15 @@ export default function MySizePrototype() {
             profile={profile}
             onCancel={() => setView("closet")}
             onSave={(next) => {
-              setProfile(next);
+              setProfiles((prev) => {
+  const exists = prev.some((p) => p.id === next.id);
+
+  if (exists) {
+    return prev.map((p) => (p.id === next.id ? next : p));
+  }
+
+  return [...prev, next];
+});
               setView("closet");
             }}
           />
@@ -325,6 +563,30 @@ export default function MySizePrototype() {
                     ]}
                     onChange={setCategory}
                   />
+
+<div className="flex gap-2">
+  <input
+    type="text"
+    value={search}
+    onChange={(e) => setSearch(e.target.value)}
+    onKeyDown={(e) => {
+      if (e.key === "Enter") {
+        setSearchQuery(search);
+      }
+    }}
+    placeholder="ブランド・商品名を検索"
+    className="flex-1 rounded-full border border-[#dcdcd5] px-5 py-3 text-sm outline-none"
+  />
+
+  <button
+    type="button"
+    onClick={() => setSearchQuery(search)}
+    className="rounded-full bg-[#181918] px-6 py-3 text-sm font-semibold text-white"
+  >
+    検索
+  </button>
+</div>
+
                   <Select
                     label="SORT"
                     value={sort === "match" ? "サイズ一致度順" : "価格順"}
@@ -430,8 +692,8 @@ function ProductCard({
 }) {
   const match = profile ? score(product, profile) : null;
   return (
-    <button onClick={onClick} className="group text-left">
-      <div className="relative aspect-[0.82] overflow-hidden bg-[#e9e8e2]">
+    <button onClick={onClick} className="group w-full text-left">
+      <div className="relative w-full aspect-[0.82] overflow-hidden bg-[#e9e8e2]">
         <img
           src={product.image}
           alt={`${product.brand} ${product.name}`}
@@ -462,14 +724,18 @@ function ProductCard({
 
 function Closet({
   profile,
+  savedProducts,
   onAdd,
   onFind,
   onEdit,
+  onProductClick,
 }: {
   profile: Profile | null;
+  savedProducts: Product[];
   onAdd: () => void;
   onFind: () => void;
   onEdit: () => void;
+  onProductClick: (product: Product) => void;
 }) {
   return (
     <section className="pt-14 md:pt-20">
@@ -495,7 +761,7 @@ function Closet({
         </button>
       </div>
       {profile ? (
-        <div className="mt-10 max-w-2xl rounded-2xl border border-[#deded8] bg-[#fbfbf8] p-6 sm:p-8">
+        <div className="mt-10 max-w-none rounded-2xl border border-[#deded8] bg-[#fbfbf8] p-6 sm:p-8">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[10px] font-semibold tracking-[0.18em] text-[#85877e]">
@@ -509,6 +775,7 @@ function Closet({
             <Heart className="h-5 w-5 fill-[#dce4d7] text-[#879481]" />
           </div>
           <div className="mt-8 grid grid-cols-4 border-y border-[#e2e2db] py-5">
+
             {[
               ["着丈", profile.length],
               ["身幅", profile.width],
@@ -524,6 +791,7 @@ function Closet({
               </div>
             ))}
           </div>
+
           <div className="mt-7 flex flex-wrap gap-3">
             <button
               onClick={onFind}
@@ -543,6 +811,32 @@ function Closet({
       ) : (
         <EmptyState onAdd={onAdd} />
       )}
+
+{savedProducts.length > 0 && (
+  <div className="mt-10 max-w-4xl">
+    <div className="mb-5">
+      <p className="text-[10px] font-semibold tracking-[0.18em] text-[#85877e]">
+        SAVED ITEMS
+      </p>
+
+      <h2 className="mt-2 text-2xl font-medium tracking-[-0.03em]">
+        保存したアイテム
+      </h2>
+    </div>
+
+    <div className="grid w-full grid-cols-2 gap-x-6 gap-y-10 lg:grid-cols-3">
+      {savedProducts.map((product) => (
+        <ProductCard
+          key={product.id}
+          product={product}
+          profile={profile}
+          onClick={() => onProductClick(product)}
+        />
+      ))}
+    </div>
+  </div>
+)}
+
     </section>
   );
 }
@@ -579,29 +873,92 @@ function ProfileForm({
     sleeve: String(profile?.sleeve ?? ""),
   });
   const [error, setError] = useState("");
-  function submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (
-      !form.name.trim() ||
-      ["length", "width", "shoulder", "sleeve"].some(
-        (key) =>
-          !Number(form[key as keyof typeof form]) ||
-          Number(form[key as keyof typeof form]) <= 0,
-      )
-    ) {
-      setError("服の名前と、4つの実寸を正しく入力してください。");
+  async function submit(e: React.FormEvent) {
+  e.preventDefault();
+
+  if (
+    !form.name.trim() ||
+    ["length", "width", "shoulder", "sleeve"].some(
+      (key) =>
+        !Number(form[key as keyof typeof form]) ||
+        Number(form[key as keyof typeof form]) <= 0,
+    )
+  ) {
+    setError("服の名前と、4つの実寸を正しく入力してください。");
+    return;
+  }
+
+  setError("");
+
+  // 既存の基準服がある場合はUPDATE
+  if (profile?.id) {
+    const { data, error } = await supabase
+      .from("user_size_profiles")
+      .update({
+        name: form.name,
+        category: form.category,
+        length: Number(form.length),
+        width: Number(form.width),
+        shoulder: Number(form.shoulder),
+        sleeve: Number(form.sleeve),
+      })
+      .eq("id", profile.id)
+      .select()
+      .single();
+
+    if (error) {
+      setError(`更新に失敗しました：${error.message}`);
       return;
     }
+
     onSave({
-      id: profile?.id ?? Date.now(),
+      id: data.id,
+      name: data.name,
+      category: data.category,
+      length: data.length,
+      width: data.width,
+      shoulder: data.shoulder,
+      sleeve: data.sleeve,
+    });
+
+    return;
+  }
+
+  // 新規登録の場合はINSERT
+  const { data: userData } = await supabase.auth.getUser();
+
+  console.log("現在のログインユーザー:", userData.user);
+console.log("現在のメールアドレス:", userData.user?.email);
+
+  const { data, error } = await supabase
+    .from("user_size_profiles")
+    .insert({
+      user_id: userData.user?.id ?? null,
       name: form.name,
       category: form.category,
       length: Number(form.length),
       width: Number(form.width),
       shoulder: Number(form.shoulder),
       sleeve: Number(form.sleeve),
-    });
+    })
+    .select()
+    .single();
+
+  if (error) {
+    setError(`保存に失敗しました：${error.message}`);
+    return;
   }
+
+  onSave({
+    id: data.id,
+    name: data.name,
+    category: data.category,
+    length: data.length,
+    width: data.width,
+    shoulder: data.shoulder,
+    sleeve: data.sleeve,
+  });
+}
   return (
     <section className="mx-auto max-w-2xl pt-14 md:pt-20">
       <button onClick={onCancel} className="mb-10 text-xs text-[#777970]">
@@ -716,6 +1073,75 @@ function ProductDetail({
   profile: Profile | null;
   onBack: () => void;
 }) {
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+  const loadSavedState = async () => {
+    const { data: userData } = await supabase.auth.getUser();
+
+    if (!userData.user) {
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("saved_items")
+      .select("id")
+      .eq("user_id", userData.user.id)
+      .eq("product_id", product.id)
+      .limit(1);
+
+    if (error) {
+      console.error("保存状態の取得に失敗しました:", error);
+      return;
+    }
+
+    setSaved((data?.length ?? 0) > 0);
+  };
+
+  loadSavedState();
+}, [product.id]);
+  
+const handleSave = async () => {
+  const { data: userData } = await supabase.auth.getUser();
+
+  if (!userData.user) {
+    console.error("ログインユーザーがいません");
+    return;
+  }
+
+  if (saved) {
+    // 保存済みの場合 → 削除
+    const { error } = await supabase
+      .from("saved_items")
+      .delete()
+      .eq("user_id", userData.user.id)
+      .eq("product_id", product.id);
+
+    if (error) {
+      console.error("削除に失敗しました:", error);
+      return;
+    }
+
+    setSaved(false);
+    return;
+  }
+
+  // 未保存の場合 → 保存
+  const { error } = await supabase
+    .from("saved_items")
+    .insert({
+      user_id: userData.user.id,
+      product_id: product.id,
+    });
+
+  if (error) {
+    console.error("保存に失敗しました:", error);
+    return;
+  }
+
+  setSaved(true);
+};
+
   const match = profile ? score(product, profile) : null;
   const diffs = profile
     ? [
@@ -790,7 +1216,7 @@ function ProductDetail({
             ))}
           </div>
           <button
-            onClick={() => setSaved(!saved)}
+            onClick={handleSave}
             className="mt-8 flex items-center justify-center gap-2 rounded-full border border-[#cdcdc5] py-3 text-xs font-semibold"
           >
             <Heart

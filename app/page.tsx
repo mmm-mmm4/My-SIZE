@@ -1,5 +1,5 @@
-import MySizePrototype from '@/components/my-size-prototype'
+import MySizePrototype from "@/components/my-size-prototype";
 
 export default function Page() {
-  return <MySizePrototype />
+  return <MySizePrototype />;
 }
