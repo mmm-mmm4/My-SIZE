@@ -3,6 +3,7 @@
 お気に入りの服の実寸を基準に、自分に合うサイズ感の古着を探せるWebアプリです。
 
 # サイトイメージ
+https://github.com/user-attachments/assets/46783c31-ec59-4f3a-80c5-e3c8e2d44efe
 
 ## Overview
 
