@@ -6,6 +6,9 @@
 <img width="1920" height="1080" alt="Image" src="https://github.com/user-attachments/assets/7ea60274-3ac6-4e21-9f72-f6bae7c5b0fe" />
 ## Overview
 
+# サイトURL
+https://my-size-5ss05spx4-mmm-mmm4s-projects.vercel.app/
+
 古着をオンラインで購入する際、「表記サイズが同じでもブランドやアイテムによって実際のサイズ感が違う」という課題に着目して制作しています。
 
 自分が持っている「ちょうどいい服」を基準服として登録し、商品の実寸と比較することで、自分のサイズ感に合った商品を探しやすくすることを目的としています。
