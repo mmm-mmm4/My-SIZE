@@ -284,6 +284,19 @@ const [savedProducts, setSavedProducts] = useState<Product[]>([]);
 }, []);
 
   const [view, setView] = useState<"home" | "closet" | "form">("home");
+  useEffect(() => {
+  const handlePopState = () => {
+    setSelectedProduct(null);
+    setView("home");
+  };
+
+  window.addEventListener("popstate", handlePopState);
+
+  return () => {
+    window.removeEventListener("popstate", handlePopState);
+  };
+}, []);
+
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [category, setCategory] = useState("すべて");
   const [search, setSearch] = useState("");
@@ -969,7 +982,7 @@ console.log("現在のメールアドレス:", userData.user?.email);
       </p>
       <h1 className="text-5xl font-medium tracking-[-0.06em]">基準服を登録</h1>
       <p className="mt-4 text-sm leading-6 text-[#777970]">
-        自分にとって「ちょうどいい」服の実寸を入力してください。
+        自分に��って「ちょうどいい」服の実寸を入力してください。
       </p>
       <form onSubmit={submit} className="mt-10 space-y-6">
         <Field
