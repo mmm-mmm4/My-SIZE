@@ -7,7 +7,7 @@ import {
   ArrowRight,
   ChevronDown,
   Heart,
-  Menu,
+  
   Plus,
   Search,
   SlidersHorizontal,
@@ -173,7 +173,6 @@ useEffect(() => {
     });
 
     if (error) {
-      console.error("新規登録に失敗しました:", error);
       setAuthError(error.message);
       return;
     }
@@ -190,7 +189,6 @@ useEffect(() => {
   });
 
   if (error) {
-    console.error("ログインに失敗しました:", error);
     setAuthError(error.message);
     return;
   }
@@ -205,7 +203,6 @@ async function handleLogout() {
   const { error } = await supabase.auth.signOut();
 
   if (error) {
-    console.error("ログアウトに失敗しました:", error);
     return;
   }
 
@@ -219,10 +216,8 @@ const [savedProducts, setSavedProducts] = useState<Product[]>([]);
   const loadProfiles = async () => {
   const { data: userData } = await supabase.auth.getUser();
 
-  console.log("現在のログインユーザーID:", userData.user?.id);
 
   if (!userData.user) {
-    console.log("ログインユーザーがいません");
     return;
   }
 
@@ -233,11 +228,9 @@ const [savedProducts, setSavedProducts] = useState<Product[]>([]);
     .order("created_at", { ascending: true });
 
   if (error) {
-    console.error("基準服の取得に失敗しました:", error);
     return;
   }
 
-  console.log("取得した基準服:", data);
 
   setProfiles(data ?? []);
 };
@@ -246,7 +239,6 @@ const [savedProducts, setSavedProducts] = useState<Product[]>([]);
   const { data: userData } = await supabase.auth.getUser();
 
   if (!userData.user) {
-    console.log("ログインユーザーがいません");
     return;
   }
 
@@ -255,14 +247,11 @@ const [savedProducts, setSavedProducts] = useState<Product[]>([]);
     .select("product_id")
     .eq("user_id", userData.user.id);
 
-    console.log("Supabaseから取得した保存商品:", data);
 
   if (error) {
-    console.error("保存商品の取得に失敗しました:", error);
     return;
   }
 
-  console.log("保存された商品:", data);
 
   const saved = (data ?? [])
     .map((item) =>
@@ -290,7 +279,6 @@ const [savedProducts, setSavedProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [brand, setBrand] = useState("すべて");
   const [sort, setSort] = useState<"match" | "price">("match");
-  const [menuOpen, setMenuOpen] = useState(false);
 
   const filteredProducts = useMemo(() => {
     const list = products.filter(
@@ -315,7 +303,6 @@ product.brand.toLowerCase().includes(searchQuery.toLowerCase())
   function goHome() {
     setView("home");
     setSelectedProduct(null);
-    setMenuOpen(false);
   }
 
 if (!isLoggedIn) {
@@ -415,12 +402,7 @@ if (!isLoggedIn) {
             >
               MY CLOSET
             </button>
-            <button
-              onClick={() => setMenuOpen(true)}
-              className="transition-colors hover:text-[#181918]"
-            >
-              MENU
-            </button>
+            
           </nav>
           
           <button
@@ -430,35 +412,9 @@ if (!isLoggedIn) {
   LOGOUT
 </button>
 
-          <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="rounded-full p-2 sm:hidden"
-            aria-label="メニューを開く"
-          >
-            <Menu className="h-5 w-5" />
-          </button>
+          
         </div>
-        {menuOpen && (
-          <div className="border-t border-[#deded8] bg-[#f7f7f4] px-5 py-4 sm:hidden">
-            <div className="flex flex-col gap-4 text-xs font-semibold tracking-[0.16em]">
-              <button onClick={goHome} className="text-left">
-                SEARCH
-              </button>
-              <button
-                onClick={() => {
-                  setView("closet");
-                  setMenuOpen(false);
-                }}
-                className="text-left"
-              >
-                MY CLOSET
-              </button>
-              <button onClick={() => setMenuOpen(false)} className="text-left">
-                ABOUT
-              </button>
-            </div>
-          </div>
-        )}
+        
       </header>
 
       <main className="mx-auto max-w-[1240px] px-5 pb-20 sm:px-8">
@@ -927,8 +883,6 @@ function ProfileForm({
   // 新規登録の場合はINSERT
   const { data: userData } = await supabase.auth.getUser();
 
-  console.log("現在のログインユーザー:", userData.user);
-console.log("現在のメールアドレス:", userData.user?.email);
 
   const { data, error } = await supabase
     .from("user_size_profiles")
@@ -1091,7 +1045,6 @@ function ProductDetail({
       .limit(1);
 
     if (error) {
-      console.error("保存状態の取得に失敗しました:", error);
       return;
     }
 
@@ -1105,7 +1058,6 @@ const handleSave = async () => {
   const { data: userData } = await supabase.auth.getUser();
 
   if (!userData.user) {
-    console.error("ログインユーザーがいません");
     return;
   }
 
@@ -1118,7 +1070,6 @@ const handleSave = async () => {
       .eq("product_id", product.id);
 
     if (error) {
-      console.error("削除に失敗しました:", error);
       return;
     }
 
@@ -1135,7 +1086,6 @@ const handleSave = async () => {
     });
 
   if (error) {
-    console.error("保存に失敗しました:", error);
     return;
   }
 
